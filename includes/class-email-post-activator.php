@@ -30,7 +30,9 @@ class Email_Post_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+		if ( ! wp_next_scheduled( 'schedule_mail' ) ) {
+			wp_schedule_event( strtotime( 'today 12:00am'), 'daily', 'schedule_mail' );
+		}
 	}
-
+	
 }

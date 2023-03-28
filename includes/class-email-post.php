@@ -156,7 +156,7 @@ class Email_Post {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-
+		$this->loader->add_action( 'schedule_mail', $plugin_admin, 'send_daily_mail' );
 	}
 
 	/**

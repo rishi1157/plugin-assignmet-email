@@ -100,4 +100,69 @@ class Email_Post_Admin {
 
 	}
 
+	public function get_post_content() {
+		$args = array(
+			'date_query' => array(
+				array( 'after' => '24 hours ago', ),
+			),
+		);
+		$query = new WP_Query($args);
+		$posts = $query->posts();
+		$content = array();
+
+		foreach ( $posts as $post ) {
+			$post_data = array(
+				'title' => $post->post_title,
+				'url' => get_permalink( $post->ID ),
+				'meta_title' => get_post_meta($post->ID),
+				'meta_description' => get_post_meta($post->ID),
+				'meta_keywords' => get_post_meta($post->ID),
+				'page_speed' => $this->get_page_speed( get_permalink( $post->ID ) ),
+			);
+			array_push($content, $post_data);
+		}
+		return $content;
+	}
+
+	public function get_page_speed($url) {
+		$api_key = '416ca0ef-63e4-4caa-a047-ead672ecc874';
+		$new_url = 'http://www.webpagetest.org/runtest.php?url=' . $url . '&runs=1&f=xml&k=' . $api_key;
+		$result = simplexml_load_file($new_url);
+		$status = $result -> statusCode;
+		if ($status == 400) {
+			return "Limit Exceeded!!";
+		}
+		else {
+			$test_id = $result->data->testId;
+			$status_code = 100;
+			while( $status_code != 200) {
+				sleep(50);
+				$xml_result = simplexml_load_file( 'http://www.webpagetest.org/xmlResult/' . $test_id . '/' );
+				$status_code = $xml_result->statusCode;
+				$time = (float)($xml_result->data->median->firstView->loadTime) / 100;
+			};
+			return $time;
+		}
+	}
+
+	public function send_daily_mail() {
+		$content = $this->get_post_content();
+		$message = '';
+		foreach ($content as $data) {
+			$message .= 'Title: ' . $data['title'] . '\n';
+			$message .= 'URL: ' . $data['url'] . '\n';
+			$message .= 'Meta Title: ' . $data['meta_title'] . '\n';
+			$message .= 'Meta Description: ' . $data['meta_description'] . '\n';
+			$message .= 'Meta Keywords: ' . $data['meta_keywords'] . '\n';
+			$message .= 'Page Speed Score: ' . $data['page_speed'] . '\n';
+			$message .= '\n';
+		}
+		$headers = array(
+			'From: rishabh.pandey@wisdmlabs.com',
+			'Content-Type: text/html; charset-UTF-8'
+		);
+
+		wp_mail(get_option('admin_email'), 'Summary of daily posts', $message, $headers);
+	}
+
 }
