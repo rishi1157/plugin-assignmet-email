@@ -30,7 +30,7 @@ class Email_Post_Deactivator {
 	 * @since    1.0.0
 	 */
 	public static function deactivate() {
-
+		wp_clear_scheduled_hook( 'schedule_mail' );
 	}
 
 }
